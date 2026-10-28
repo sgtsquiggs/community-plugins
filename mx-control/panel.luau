@@ -114,7 +114,8 @@ local function controlNode(deviceId, settingName, key, control, choices, enabled
 	if control.type == "lazy_select" then
 		if openSelect ~= k then
 			return ui.button({
-				key = k .. "|closed", text = control.text .. " ▾", enabled = enabled, variant = "secondary",
+				key = k .. "|closed", text = control.text, glyph = "chevron-down", glyphSize = 14,
+				variant = "outline", contentAlign = "start", enabled = enabled,
 				width = not fill and 210 or nil, flexGrow = fill and 1 or nil,
 				onClick = function()
 					openSelect = k
