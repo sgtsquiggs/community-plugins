@@ -78,6 +78,20 @@ c = shared.controlFor(divert)
 check("map_choice renders one control per key",
     c.type == "map" and #c.entries == 2 and c.entries[2].control.type == "select" and c.entries[2].control.index == 1)
 
+local manyActions = {}
+for i = 1, 1879 do
+    manyActions[i] = { id = i * i, name = "Action " .. i }
+end
+local remap = {
+    name = "persistent-remappable-keys", kind = "map_choice",
+    keys = { { key = "82", label = "Middle Button", kind = "choice", choices = manyActions, value = 9 } },
+}
+c = shared.controlFor(remap)
+check("a long choice list renders lazily with the current name",
+    c.type == "map" and c.entries[1].control.type == "lazy_select" and c.entries[1].control.text == "Action 3")
+c = shared.controlFor({ kind = "choice", choices = manyActions, value = 9, eager = true })
+check("eager builds the full select for a long list", c.type == "select" and #c.options == 1879 and c.index == 2)
+
 c = shared.controlFor(eq)
 check("unsupported kinds are read-only", c.type == "readonly" and c.text == "{...}")
 

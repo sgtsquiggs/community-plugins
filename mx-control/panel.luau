@@ -15,6 +15,8 @@ local selectedId = nil
 local activeTab = "point"
 local pending = {}
 local dragging = {}
+-- controlKey of the one lazy select whose dropdown is built.
+local openSelect = nil
 local armedHost = nil
 local armedUntil = 0
 local isOpen = false
@@ -102,12 +104,26 @@ local function commit(deviceId, settingName, key, control, choices, raw)
 	end
 	pending[controlKey(deviceId, settingName, key)] = { value = shown, untilMs = now() + PENDING_MS }
 	send(shared.setCommand(deviceId, settingName, key, value))
+	openSelect = nil
 	render()
 end
 
 -- fill: the control grows into its column instead of taking a fixed width.
 local function controlNode(deviceId, settingName, key, control, choices, enabled, fill)
 	local k = controlKey(deviceId, settingName, key)
+	if control.type == "lazy_select" then
+		if openSelect ~= k then
+			return ui.button({
+				key = k .. "|closed", text = control.text .. " ▾", enabled = enabled, variant = "secondary",
+				width = not fill and 210 or nil, flexGrow = fill and 1 or nil,
+				onClick = function()
+					openSelect = k
+					render()
+				end,
+			})
+		end
+		control = shared.controlFor({ kind = "choice", choices = choices, value = control.value, eager = true })
+	end
 	if control.type == "toggle" then
 		return ui.toggle({
 			key = k, checked = control.value, enabled = enabled,

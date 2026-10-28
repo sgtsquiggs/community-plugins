@@ -25,6 +25,9 @@ end
 
 -- A choice list this long and evenly spaced is a numeric scale (DPI).
 local SLIDER_MIN_CHOICES = 13
+-- A choice list this long builds its dropdown only on demand: eight buttons of
+-- Persistent Key/Button Mapping (~1900 actions each) blow the panel CPU budget.
+M.LAZY_SELECT_MIN_CHOICES = 200
 
 M.TABS = { "point", "buttons", "hosts", "profiles", "shortcuts" }
 
@@ -182,7 +185,15 @@ function M.controlFor(setting)
                 value = tonumber(M.valueId(setting.value)) or lo,
             }
         end
-        return { type = "select", options = names(setting.choices), index = M.choiceIndex(setting.choices, setting.value) }
+        local index = M.choiceIndex(setting.choices, setting.value)
+        if not setting.eager and #(setting.choices or {}) >= M.LAZY_SELECT_MIN_CHOICES then
+            local current = setting.choices[index + 1]
+            return {
+                type = "lazy_select", value = setting.value,
+                text = current and tostring(current.name) or M.displayText(setting.value),
+            }
+        end
+        return { type = "select", options = names(setting.choices), index = index }
     end
     if kind == "map_choice" or kind == "map_range" or kind == "multiple_toggle" then
         local entries = {}
